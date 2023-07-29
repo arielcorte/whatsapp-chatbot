@@ -5,27 +5,36 @@ import qrcode from 'qrcode-terminal';
 
 @Injectable()
 export class WhatsappService {
-  private client: Client;
+  private clients: Map<string, Client>;
 
   constructor() {
-    const config: ClientOptions = {
-      authStrategy: new LocalAuth(),
-    };
+    this.clients = new Map<string, Client>();
+  }
 
-    this.client = new Client(config);
+  createClientForUser(userId: string) {
+    if (!this.clients.has(userId)) {
+      const options: ClientOptions = {};
+      const client = new Client(options);
 
-    this.client.on('qr', (qr) => {
-      qrcode.generate(qr, { small: true });
-    });
+      client.on('qr', (qr) => {
+        qrcode.generate(qr, { small: true });
+      });
 
-    this.client.on('ready', () => {
-      console.log('Client is ready');
-    });
+      client.on('ready', () => {
+        console.log('Client is ready!');
+      });
 
-    this.client.on('message', (msg) => {
-      console.log(msg.body);
-    });
+      client.on('message', (msg) => {
+        console.log(msg);
+      });
 
-    this.client.initialize();
+      client.initialize();
+
+      this.clients.set(userId, client);
+    }
+  }
+
+  getClientForUser(userId: string): Client | undefined {
+    return this.clients.get(userId);
   }
 }
