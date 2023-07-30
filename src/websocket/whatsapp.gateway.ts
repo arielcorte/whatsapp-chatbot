@@ -29,13 +29,23 @@ export class WhatsappGateway
     console.log('Client disconnected: ', socket.id);
   }
 
+  sendQr(client: Socket, qr: string) {
+    console.log('sending qr');
+    client.emit('qr-code', qr);
+  }
+
   @SubscribeMessage('new-client')
   newClient(
     @MessageBody('userId') userId: string,
     @ConnectedSocket() client: Socket,
   ) {
     console.log('new-client in progress...');
-    client.emit('new-client', this.whatsappService.createClientForUser(userId));
+    client.emit(
+      'new-client',
+      this.whatsappService.createClientForUser(userId, (qr) =>
+        this.sendQr(client, qr),
+      ),
+    );
   }
 
   @SubscribeMessage('qr-code')

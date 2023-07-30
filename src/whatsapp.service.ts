@@ -11,13 +11,15 @@ export class WhatsappService {
     this.qrCodes = new Map<string, string>();
   }
 
-  createClientForUser(userId: string) {
+  createClientForUser(userId: string, qrCallback: (qr: string) => void) {
     if (this.clients.has(userId)) return 'user already created';
 
     const options: ClientOptions = {};
     const client = new Client(options);
 
     client.on('qr', (qr) => {
+      console.log('qr called');
+      qrCallback(qr);
       this.qrCodes.set(userId, qr);
     });
 
