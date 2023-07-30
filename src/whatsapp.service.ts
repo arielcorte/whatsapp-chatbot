@@ -42,7 +42,7 @@ export class WhatsappService {
     });
 
     client.on('message', (msg) => {
-      console.log(msg);
+      console.log(userId, msg.body);
     });
 
     client.initialize();
@@ -54,6 +54,10 @@ export class WhatsappService {
 
   getClientForUser(userId: string): Client | undefined {
     return this.clients.get(userId);
+  }
+
+  deleteClientForUser(userId: string): boolean {
+    return this.clients.delete(userId);
   }
 
   getQrCodeForUser(userId: string): string | undefined {

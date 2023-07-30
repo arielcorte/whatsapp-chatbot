@@ -43,10 +43,18 @@ export class WhatsappGateway
   }
 
   @SubscribeMessage('qr-code')
-  getQrCode(
-    @MessageBody('userId') userId: string,
+  getQrCode(@MessageBody() userId: string, @ConnectedSocket() client: Socket) {
+    client.emit('qr-code', this.whatsappService.getQrCodeForUser(userId));
+  }
+
+  @SubscribeMessage('delete-client')
+  deleteClient(
+    @MessageBody() userId: string,
     @ConnectedSocket() client: Socket,
   ) {
-    client.emit('qr-code', this.whatsappService.getQrCodeForUser(userId));
+    client.emit(
+      'delete-client',
+      this.whatsappService.deleteClientForUser(userId),
+    );
   }
 }
