@@ -11,10 +11,22 @@ export class WhatsappService {
     this.qrCodes = new Map<string, string>();
   }
 
-  createClientForUser(userId: string, qrCallback: (qr: string) => void) {
+  createClientForUser({
+    userId,
+    qrCallback,
+    readyCallback,
+  }: {
+    userId: string;
+    qrCallback: (qr: string) => void;
+    readyCallback: (message: string) => void;
+  }) {
     if (this.clients.has(userId)) return 'user already created';
 
-    const options: ClientOptions = {};
+    const options: ClientOptions = {
+      qrMaxRetries: 5,
+      takeoverTimeoutMs: 60000,
+      authTimeoutMs: 60000,
+    };
     const client = new Client(options);
 
     client.on('qr', (qr) => {
@@ -25,6 +37,7 @@ export class WhatsappService {
 
     client.on('ready', () => {
       console.log('Client is ready!');
+      readyCallback('Client is ready');
     });
 
     client.on('message', (msg) => {

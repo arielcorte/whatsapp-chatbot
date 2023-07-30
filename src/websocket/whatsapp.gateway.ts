@@ -29,11 +29,6 @@ export class WhatsappGateway
     console.log('Client disconnected: ', socket.id);
   }
 
-  sendQr(client: Socket, qr: string) {
-    console.log('sending qr');
-    client.emit('qr-code', qr);
-  }
-
   @SubscribeMessage('new-client')
   newClient(
     @MessageBody('userId') userId: string,
@@ -42,9 +37,11 @@ export class WhatsappGateway
     console.log('new-client in progress...');
     client.emit(
       'new-client',
-      this.whatsappService.createClientForUser(userId, (qr) =>
-        this.sendQr(client, qr),
-      ),
+      this.whatsappService.createClientForUser({
+        userId,
+        qrCallback: (qr) => client.emit('qr-code', qr),
+        readyCallback: (msg) => client.emit('new-client', msg),
+      }),
     );
   }
 
