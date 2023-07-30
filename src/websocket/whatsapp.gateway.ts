@@ -30,11 +30,8 @@ export class WhatsappGateway
   }
 
   @SubscribeMessage('new-client')
-  newClient(
-    @MessageBody('userId') userId: string,
-    @ConnectedSocket() client: Socket,
-  ) {
-    console.log('new-client in progress...');
+  newClient(@MessageBody() userId: string, @ConnectedSocket() client: Socket) {
+    console.log(userId);
     client.emit(
       'new-client',
       this.whatsappService.createClientForUser({

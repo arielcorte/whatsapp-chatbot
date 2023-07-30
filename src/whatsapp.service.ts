@@ -23,6 +23,7 @@ export class WhatsappService {
     if (this.clients.has(userId)) return 'user already created';
 
     const options: ClientOptions = {
+      authStrategy: new LocalAuth({ clientId: userId }),
       qrMaxRetries: 5,
       takeoverTimeoutMs: 60000,
       authTimeoutMs: 60000,
