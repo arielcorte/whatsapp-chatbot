@@ -1,40 +1,46 @@
 import { Injectable } from '@nestjs/common';
 import { Client, ClientOptions, LocalAuth } from 'whatsapp-web.js';
 
-import qrcode from 'qrcode-terminal';
-
 @Injectable()
 export class WhatsappService {
   private clients: Map<string, Client>;
+  private qrCodes: Map<string, string>;
 
   constructor() {
     this.clients = new Map<string, Client>();
+    this.qrCodes = new Map<string, string>();
   }
 
   createClientForUser(userId: string) {
-    if (!this.clients.has(userId)) {
-      const options: ClientOptions = {};
-      const client = new Client(options);
+    if (this.clients.has(userId)) return 'user already created';
 
-      client.on('qr', (qr) => {
-        qrcode.generate(qr, { small: true });
-      });
+    const options: ClientOptions = {};
+    const client = new Client(options);
 
-      client.on('ready', () => {
-        console.log('Client is ready!');
-      });
+    client.on('qr', (qr) => {
+      this.qrCodes.set(userId, qr);
+    });
 
-      client.on('message', (msg) => {
-        console.log(msg);
-      });
+    client.on('ready', () => {
+      console.log('Client is ready!');
+    });
 
-      client.initialize();
+    client.on('message', (msg) => {
+      console.log(msg);
+    });
 
-      this.clients.set(userId, client);
-    }
+    client.initialize();
+
+    this.clients.set(userId, client);
+
+    return 'success';
   }
 
   getClientForUser(userId: string): Client | undefined {
     return this.clients.get(userId);
+  }
+
+  getQrCodeForUser(userId: string): string | undefined {
+    return this.qrCodes.get(userId);
   }
 }
