@@ -37,7 +37,7 @@ export class WhatsappGateway
       this.whatsappService.createClientForUser({
         userId,
         qrCallback: (qr) => client.emit('qr-code', qr),
-        readyCallback: (msg) => client.emit('new-client', msg),
+        readyCallback: (msg) => client.emit('ready', msg),
       }),
     );
   }

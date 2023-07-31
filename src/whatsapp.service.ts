@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { Client, ClientOptions, LocalAuth } from 'whatsapp-web.js';
+import { ChatflowService } from './chatflow.service';
 
 @Injectable()
 export class WhatsappService {
   private clients: Map<string, Client>;
   private qrCodes: Map<string, string>;
 
-  constructor() {
+  constructor(private readonly chatflowService: ChatflowService) {
     this.clients = new Map<string, Client>();
     this.qrCodes = new Map<string, string>();
   }
@@ -25,8 +26,6 @@ export class WhatsappService {
     const options: ClientOptions = {
       authStrategy: new LocalAuth({ clientId: userId }),
       qrMaxRetries: 5,
-      takeoverTimeoutMs: 60000,
-      authTimeoutMs: 60000,
     };
     const client = new Client(options);
 
@@ -38,11 +37,16 @@ export class WhatsappService {
 
     client.on('ready', () => {
       console.log('Client is ready!');
-      readyCallback('Client is ready');
+      readyCallback('ready');
     });
 
     client.on('message', (msg) => {
       console.log(userId, msg.body);
+      this.chatflowService
+        .query({ question: msg.body, sessionId: msg.from })
+        .then((json) => {
+          console.log(json);
+        });
     });
 
     client.initialize();
