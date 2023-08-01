@@ -8,10 +8,14 @@ type HistoryFrom = 'apiMessage' | 'userMessage';
 export class WhatsappService {
   private clients: Map<string, Client>;
   private qrCodes: Map<string, string>;
+  private timeouts: Map<string, NodeJS.Timeout>;
+  private messages: Map<string, string>;
 
   constructor(private readonly chatflowService: ChatflowService) {
     this.clients = new Map<string, Client>();
     this.qrCodes = new Map<string, string>();
+    this.timeouts = new Map<string, NodeJS.Timeout>();
+    this.messages = new Map<string, string>();
   }
 
   createClientForUser({
@@ -42,15 +46,40 @@ export class WhatsappService {
       readyCallback('ready');
     });
 
-    client.on('message', async (msg) => {
+    client.on('message', (msg) => {
       console.log(userId, msg.body);
       //const history = this.getHistory(msg);
-      const result = await this.chatflowService.query({
-        question: msg.body,
-        sessionId: msg.from,
+      const chatTimeout = this.timeouts.get(userId + msg.from);
+      console.log(chatTimeout);
+
+      if (chatTimeout) {
+        clearTimeout(chatTimeout);
+        console.log('cleared chatTimeout');
+      }
+
+      const prevMessage = this.messages.get(userId + msg.from);
+
+      this.messages.set(
+        userId + msg.from,
+        prevMessage ? prevMessage + ' ' + msg.body : msg.body,
+      );
+
+      console.log('message set');
+
+      const currentTimeout = this.executeInDelay(async () => {
+        const result = await this.chatflowService.query({
+          question: this.messages.get(userId + msg.from),
+          sessionId: msg.from,
+        });
+        console.log(msg.from, result);
+        client.sendMessage(msg.from, result);
+        this.timeouts.delete(userId + msg.from);
+        this.messages.delete(userId + msg.from);
       });
-      console.log(msg.from, result);
-      client.sendMessage(msg.from, result);
+
+      console.log('current timeout set');
+
+      this.timeouts.set(userId + msg.from, currentTimeout);
     });
 
     client.initialize();
@@ -88,5 +117,10 @@ export class WhatsappService {
 
   getQrCodeForUser(userId: string): string | undefined {
     return this.qrCodes.get(userId);
+  }
+
+  executeInDelay(callback: () => void): NodeJS.Timeout {
+    console.log('setting Timeout');
+    return setTimeout(callback, 5000);
   }
 }
