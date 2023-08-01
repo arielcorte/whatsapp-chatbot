@@ -7,9 +7,10 @@ import { WhatsappController } from './whatsapp.controller';
 import { WhatsappService } from './whatsapp.service';
 import { WhatsappGateway } from './websocket/whatsapp.gateway';
 import { ChatflowService } from './chatflow.service';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
-  imports: [],
+  imports: [HttpModule],
   controllers: [AppController, WhoamiController, WhatsappController],
   providers: [
     AppService,

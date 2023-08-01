@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { Client, ClientOptions, LocalAuth } from 'whatsapp-web.js';
+import { Client, ClientOptions, LocalAuth, Message } from 'whatsapp-web.js';
 import { ChatflowService } from './chatflow.service';
+
+type HistoryFrom = 'apiMessage' | 'userMessage';
 
 @Injectable()
 export class WhatsappService {
@@ -40,13 +42,15 @@ export class WhatsappService {
       readyCallback('ready');
     });
 
-    client.on('message', (msg) => {
+    client.on('message', async (msg) => {
       console.log(userId, msg.body);
-      this.chatflowService
-        .query({ question: msg.body, sessionId: msg.from })
-        .then((json) => {
-          console.log(json);
-        });
+      //const history = this.getHistory(msg);
+      const result = await this.chatflowService.query({
+        question: msg.body,
+        sessionId: msg.from,
+      });
+      console.log(msg.from, result);
+      client.sendMessage(msg.from, result);
     });
 
     client.initialize();
@@ -54,6 +58,24 @@ export class WhatsappService {
     this.clients.set(userId, client);
 
     return 'success';
+  }
+
+  formatMessage(msg: string): string {
+    return msg.replace(/\n/g, '[d(shift)]\n[u(shift)]');
+  }
+
+  async getHistory(msg: Message): Promise<string> {
+    //Promise<{ type: HistoryFrom; message: string }[]>
+    const chat = await msg.getChat();
+    const history = await chat.fetchMessages({ limit: 2 });
+    const formatted = history.slice(0, -1).map((msg) => {
+      //if (msg.fromMe) {
+      //  return { type: 'apiMessage' as HistoryFrom, message: msg.body };
+      //}
+      //return { type: 'userMessage' as HistoryFrom, message: msg.body };
+      return msg.body;
+    });
+    return formatted.join(' ');
   }
 
   getClientForUser(userId: string): Client | undefined {
