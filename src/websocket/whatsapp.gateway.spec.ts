@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { WhatsappGateway } from './whatsapp.gateway';
 
-describe('WebsocketGateway', () => {
+describe('WhatsappGateway', () => {
   let gateway: WhatsappGateway;
 
   beforeEach(async () => {
