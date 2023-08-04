@@ -1,26 +1,25 @@
+version: "3.9"
 services:
   node:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    tty: true
-    working_dir: /home/node
-    ports:
-      - 3001:3001
+    build: .
     volumes:
-      - .:/home/node
-    networks:
-      - whats-app-bot
-    environment:
-      BROWSER_URL: 'ws://browser:3000'
+      - ./:/app
+    working_dir: /app
+    command: "node server.js"
+    restart: always
     depends_on:
       - browser
+    ports:
+      - "8080:8080"
+    environment:
+      BROWSER_URL: 'ws://browser:3000'
+# ...
 
   browser:
-    image: browserless/chrome:latest
+    image: browserless/chrome:1-chrome-stable
     hostname: browser
     volumes:
-      - ./.wwebjs_auth/session/:/usr/src/app/user-data-dir
+      - ./.wwebjs_auth/session-master/:/usr/src/app/user-data-dir
     environment:
       CONNECTION_TIMEOUT: -1
       KEEP_ALIVE: 'true'
@@ -35,12 +34,3 @@ services:
       NODE_ENV: 'production'
       MAX_CONCURRENT_SESSIONS: 1
       DEFAULT_USER_DATA_DIR: /usr/src/app/user-data-dir
-    ports:
-      - 3000:3000
-    networks:
-        - whats-app-bot
-
-
-networks:
-  whats-app-bot:
-    driver: bridge
