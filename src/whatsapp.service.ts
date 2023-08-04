@@ -31,6 +31,11 @@ export class WhatsappService {
 
     const options: ClientOptions = {
       authStrategy: new LocalAuth({ clientId: userId }),
+      puppeteer: {
+        headless: false,
+        args: ['--no-sandbox'],
+        browserWSEndpoint: process.env.BROWSER_URL,
+      },
       qrMaxRetries: 5,
     };
     const client = new Client(options);

@@ -30,9 +30,20 @@ COPY --chown=node:node . .
 
 RUN npm run build
 
+RUN apk add chromium
+
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+
 ENV NODE_ENV production
 
 RUN npm ci --only=production && npm cache clean --force
+
+RUN chown -R node /usr/src/app/node_modules
+RUN mkdir -p /usr/src/app/user-data-dir && chown -R node /usr/src/app/user-data-dir
+
+# RUN chmod -R -777 /usr/src/app/user-data-dir
 
 USER node
 
