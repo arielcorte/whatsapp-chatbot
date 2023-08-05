@@ -1,5 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { Client, ClientOptions, LocalAuth, Message } from 'whatsapp-web.js';
+import {
+  Chat,
+  Client,
+  ClientOptions,
+  LocalAuth,
+  Message,
+} from 'whatsapp-web.js';
 import { ChatflowService } from './chatflow.service';
 
 type HistoryFrom = 'apiMessage' | 'userMessage';
@@ -32,9 +38,9 @@ export class WhatsappService {
     const options: ClientOptions = {
       authStrategy: new LocalAuth({ clientId: userId }),
       puppeteer: {
-        headless: false,
+        //headless: false,
         args: ['--no-sandbox'],
-        browserWSEndpoint: process.env.BROWSER_URL,
+        //browserWSEndpoint: process.env.BROWSER_URL,
       },
       qrMaxRetries: 5,
     };
@@ -51,40 +57,58 @@ export class WhatsappService {
       readyCallback('ready');
     });
 
-    client.on('message', (msg) => {
-      console.log(userId, msg.body);
-      //const history = this.getHistory(msg);
-      const chatTimeout = this.timeouts.get(userId + msg.from);
-      console.log(chatTimeout);
-
-      if (chatTimeout) {
-        clearTimeout(chatTimeout);
-        console.log('cleared chatTimeout');
+    client.on('message', async (msg: Message) => {
+      if (msg.isStatus) return;
+      const checkGroupArchived = await msg
+        .getChat()
+        .then((chat) => chat.isGroup || chat.archived);
+      if (checkGroupArchived) return;
+      if (
+        msg.type === 'audio' ||
+        msg.type === 'ptt' ||
+        msg.type === 'image' ||
+        msg.type === 'video' ||
+        msg.type === 'document'
+      ) {
+        msg.reply(
+          'Lo siento, soy una IA y por el momento no soy capaz de entender Audios, Imágenes, Videos, Documentos o Stickers. Por favor, ¿Podrías explicarme en texto? Muchas gracias 😊',
+        );
       }
 
-      const prevMessage = this.messages.get(userId + msg.from);
+      if (msg.type === 'chat') {
+        console.log(userId, msg.body);
+        const chatTimeout = this.timeouts.get(userId + msg.from);
+        console.log(chatTimeout);
 
-      this.messages.set(
-        userId + msg.from,
-        prevMessage ? prevMessage + ' ' + msg.body : msg.body,
-      );
+        if (chatTimeout) {
+          clearTimeout(chatTimeout);
+          console.log('cleared chatTimeout');
+        }
 
-      console.log('message set');
+        const prevMessage = this.messages.get(userId + msg.from);
 
-      const currentTimeout = this.executeInDelay(async () => {
-        const result = await this.chatflowService.query({
-          question: this.messages.get(userId + msg.from),
-          sessionId: msg.from,
+        this.messages.set(
+          userId + msg.from,
+          prevMessage ? prevMessage + ' ' + msg.body : msg.body,
+        );
+
+        console.log('message set');
+
+        const currentTimeout = this.executeInDelay(async () => {
+          const result = await this.chatflowService.query({
+            question: this.messages.get(userId + msg.from),
+            sessionId: msg.from,
+          });
+          console.log(msg.from, result);
+          client.sendMessage(msg.from, result);
+          this.timeouts.delete(userId + msg.from);
+          this.messages.delete(userId + msg.from);
         });
-        console.log(msg.from, result);
-        client.sendMessage(msg.from, result);
-        this.timeouts.delete(userId + msg.from);
-        this.messages.delete(userId + msg.from);
-      });
 
-      console.log('current timeout set');
+        console.log('current timeout set');
 
-      this.timeouts.set(userId + msg.from, currentTimeout);
+        this.timeouts.set(userId + msg.from, currentTimeout);
+      }
     });
 
     client.initialize();

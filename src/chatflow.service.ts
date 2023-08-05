@@ -12,7 +12,7 @@ export class ChatflowService {
     try {
       const response = await lastValueFrom(
         this.httpService.post(
-          'http://20.226.191.61:3000/api/v1/prediction/0f6a825e-31b9-448f-9f55-04ad16d03dc3',
+          'http://20.226.191.61:3000/api/v1/prediction/5aaca379-0683-4947-bf05-50f01bafb091',
           {
             question: data.question,
             overrideConfig: { sessionId: data.sessionId },
@@ -20,7 +20,7 @@ export class ChatflowService {
           {
             headers: {
               Authorization:
-                'Bearer Kv0OAPNTNEp2sUQ+603DHMSRUiykguVZrDRqefS4HMQ=',
+                'Bearer ipCJq+F5R0H9rAfLiTJQGEZVmWhaTbkGw3Qo9gTclN8=',
               'Content-Type': 'application/json',
             },
           },
