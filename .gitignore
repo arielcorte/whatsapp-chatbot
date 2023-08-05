@@ -4,6 +4,9 @@
 /.wwebjs_auth
 /.wwebjs_cache
 
+# environment variables
+.env*
+
 # Logs
 logs
 *.log
