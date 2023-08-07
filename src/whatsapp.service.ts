@@ -1,14 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import {
-  Chat,
-  Client,
-  ClientOptions,
-  LocalAuth,
-  Message,
-} from 'whatsapp-web.js';
+import { Client, ClientOptions, LocalAuth, Message } from 'whatsapp-web.js';
 import { ChatflowService } from './chatflow.service';
-
-type HistoryFrom = 'apiMessage' | 'userMessage';
 
 @Injectable()
 export class WhatsappService {
@@ -44,76 +36,92 @@ export class WhatsappService {
       },
       qrMaxRetries: 5,
     };
-    const client = new Client(options);
 
-    client.on('qr', (qr) => {
-      console.log('qr called');
-      qrCallback(qr);
-      this.qrCodes.set(userId, qr);
-    });
+    try {
+      const client = new Client(options);
 
-    client.on('ready', () => {
-      console.log('Client is ready!');
-      readyCallback('ready');
-    });
+      client.on('qr', (qr) => {
+        console.log('qr called');
+        qrCallback(qr);
+        this.qrCodes.set(userId, qr);
+      });
 
-    client.on('message', async (msg: Message) => {
-      if (msg.isStatus) return;
-      const checkGroupArchived = await msg
-        .getChat()
-        .then((chat) => chat.isGroup || chat.archived);
-      if (checkGroupArchived) return;
-      if (
-        msg.type === 'audio' ||
-        msg.type === 'ptt' ||
-        msg.type === 'image' ||
-        msg.type === 'video' ||
-        msg.type === 'document'
-      ) {
-        msg.reply(
-          'Lo siento, soy una IA y por el momento no soy capaz de entender Audios, Imágenes, Videos, Documentos o Stickers. Por favor, ¿Podrías explicarme en texto? Muchas gracias 😊',
-        );
-      }
+      client.on('ready', () => {
+        console.log('Client is ready!');
+        readyCallback('ready');
+      });
 
-      if (msg.type === 'chat') {
-        console.log(userId, msg.body);
-        const chatTimeout = this.timeouts.get(userId + msg.from);
-        console.log(chatTimeout);
+      client.on('disconnected', () => {
+        console.log('disconnected', userId);
+        this.clients.delete(userId);
+        this.qrCodes.delete(userId);
+        this.deleteAllEntriesUserId(this.timeouts, userId);
+        this.deleteAllEntriesUserId(this.messages, userId);
+      });
 
-        if (chatTimeout) {
-          clearTimeout(chatTimeout);
-          console.log('cleared chatTimeout');
+      client.on('message', async (msg: Message) => {
+        if (msg.isStatus) return;
+        const checkGroupArchived = await msg
+          .getChat()
+          .then((chat) => chat.isGroup || chat.archived);
+        if (checkGroupArchived) return;
+        if (
+          msg.type === 'audio' ||
+          msg.type === 'ptt' ||
+          msg.type === 'image' ||
+          msg.type === 'video' ||
+          msg.type === 'document'
+        ) {
+          msg.reply(
+            'Lo siento, soy una IA y por el momento no soy capaz de entender Audios, Imágenes, Videos, Documentos o Stickers. Por favor, ¿Podrías explicarme en texto? Muchas gracias 😊',
+          );
         }
 
-        const prevMessage = this.messages.get(userId + msg.from);
+        if (msg.type === 'chat') {
+          console.log(userId, msg.body);
+          const chatTimeout = this.timeouts.get(userId + msg.from);
+          console.log(chatTimeout);
 
-        this.messages.set(
-          userId + msg.from,
-          prevMessage ? prevMessage + ' ' + msg.body : msg.body,
-        );
+          if (chatTimeout) {
+            clearTimeout(chatTimeout);
+            console.log('cleared chatTimeout');
+          }
 
-        console.log('message set');
+          const prevMessage = this.messages.get(userId + msg.from);
 
-        const currentTimeout = this.executeInDelay(async () => {
-          const result = await this.chatflowService.query({
-            question: this.messages.get(userId + msg.from),
-            sessionId: msg.from,
+          this.messages.set(
+            userId + msg.from,
+            prevMessage
+              ? prevMessage + ' ' + this.removeEmojis(msg.body)
+              : this.removeEmojis(msg.body),
+          );
+
+          console.log('message set');
+
+          const currentTimeout = this.executeInDelay(async () => {
+            const result = await this.chatflowService.query({
+              question: this.messages.get(userId + msg.from),
+              sessionId: msg.from,
+            });
+            console.log(msg.from, result);
+            client.sendMessage(msg.from, result);
+            this.timeouts.delete(userId + msg.from);
+            this.messages.delete(userId + msg.from);
           });
-          console.log(msg.from, result);
-          client.sendMessage(msg.from, result);
-          this.timeouts.delete(userId + msg.from);
-          this.messages.delete(userId + msg.from);
-        });
 
-        console.log('current timeout set');
+          console.log('current timeout set');
 
-        this.timeouts.set(userId + msg.from, currentTimeout);
-      }
-    });
+          this.timeouts.set(userId + msg.from, currentTimeout);
+        }
+      });
 
-    client.initialize();
+      client.initialize();
 
-    this.clients.set(userId, client);
+      this.clients.set(userId, client);
+    } catch (error) {
+      console.error(error);
+      return 'failed';
+    }
 
     return 'success';
   }
@@ -136,6 +144,13 @@ export class WhatsappService {
     return formatted.join(' ');
   }
 
+  removeEmojis(inputString: string) {
+    const emojiPattern =
+      /[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u200D\uFE0F\u20E3\uD83C\uDFFB-\uD83E\uDDFF\uD83D\uDC00-\uDE4F]/g;
+
+    return inputString.replace(emojiPattern, ' ').trim();
+  }
+
   getClientForUser(userId: string): Client | undefined {
     return this.clients.get(userId);
   }
@@ -148,8 +163,21 @@ export class WhatsappService {
     return this.qrCodes.get(userId);
   }
 
+  getKeysForUserId(map: Map<string, any>, userId: string) {
+    const filteredKeys = Array.from(map.keys()).filter((key) =>
+      key.startsWith(userId),
+    );
+    return filteredKeys;
+  }
+
+  deleteAllEntriesUserId(map: Map<string, any>, userId: string) {
+    for (const key of this.getKeysForUserId(map, userId)) {
+      map.delete(key);
+    }
+  }
+
   executeInDelay(callback: () => void): NodeJS.Timeout {
     console.log('setting Timeout');
-    return setTimeout(callback, 5000);
+    return setTimeout(callback, 7000);
   }
 }
