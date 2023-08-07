@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { Client, ClientOptions, LocalAuth, Message } from 'whatsapp-web.js';
 import { ChatflowService } from './chatflow.service';
 
+import emojiRegex from 'emoji-regex';
+
 @Injectable()
 export class WhatsappService {
   private clients: Map<string, Client>;
@@ -145,8 +147,7 @@ export class WhatsappService {
   }
 
   removeEmojis(inputString: string) {
-    const emojiPattern =
-      /[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u200D\uFE0F\u20E3\uD83C\uDFFB-\uD83E\uDDFF\uD83D\uDC00-\uDE4F]/g;
+    const emojiPattern = emojiRegex();
 
     return inputString.replace(emojiPattern, ' ').trim();
   }
