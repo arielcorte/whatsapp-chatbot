@@ -4,6 +4,8 @@ import { ChatflowService } from './chatflow.service';
 
 import emojiRegex from 'emoji-regex';
 
+const agentKeyword = '@agente';
+
 @Injectable()
 export class WhatsappService {
   private clients: Map<string, Client>;
@@ -32,7 +34,7 @@ export class WhatsappService {
     const options: ClientOptions = {
       authStrategy: new LocalAuth({ clientId: userId }),
       puppeteer: {
-        //headless: false,
+        //headless: true,
         args: ['--no-sandbox'],
         //browserWSEndpoint: process.env.BROWSER_URL,
       },
@@ -80,6 +82,9 @@ export class WhatsappService {
         }
 
         if (msg.type === 'chat') {
+          if (msg.body.toLowerCase().includes(agentKeyword)) {
+            this.requestAgent(msg);
+          }
           console.log(userId, msg.body);
           const chatTimeout = this.timeouts.get(userId + msg.from);
           console.log(chatTimeout);
@@ -101,6 +106,7 @@ export class WhatsappService {
           console.log('message set');
 
           const currentTimeout = this.executeInDelay(async () => {
+            this.messageCount();
             const result = await this.chatflowService.query({
               question: this.messages.get(userId + msg.from),
               sessionId: msg.from,
@@ -180,5 +186,19 @@ export class WhatsappService {
   executeInDelay(callback: () => void): NodeJS.Timeout {
     console.log('setting Timeout');
     return setTimeout(callback, 7000);
+  }
+
+  requestAgent(msg: Message) {
+    msg.getChat().then((chat) => {
+      chat.archive;
+      chat.sendMessage(
+        '¡Perfecto! En la brevedad un agente se pondrá en contacto con usted. Por favor, ¿Podría solicitarme los siguientes datos? - Nombre y apellido - Email - Producto en el que está interesado - Presupuesto estimado. ¡Muchas Gracias!',
+      );
+      chat.markUnread();
+    });
+  }
+
+  messageCount() {
+    //TODO increment message count by 1
   }
 }
