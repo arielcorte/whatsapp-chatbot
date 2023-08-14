@@ -33,11 +33,6 @@ export class WhatsappService {
 
     const options: ClientOptions = {
       authStrategy: new LocalAuth({ clientId: userId }),
-      puppeteer: {
-        //headless: true,
-        args: ['--no-sandbox'],
-        //browserWSEndpoint: process.env.BROWSER_URL,
-      },
       qrMaxRetries: 5,
     };
 
@@ -84,6 +79,7 @@ export class WhatsappService {
         if (msg.type === 'chat') {
           if (msg.body.toLowerCase().includes(agentKeyword)) {
             this.requestAgent(msg);
+            return;
           }
           console.log(userId, msg.body);
           const chatTimeout = this.timeouts.get(userId + msg.from);
@@ -190,9 +186,9 @@ export class WhatsappService {
 
   requestAgent(msg: Message) {
     msg.getChat().then((chat) => {
-      chat.archive;
+      chat.archive();
       chat.sendMessage(
-        '¡Perfecto! En la brevedad un agente se pondrá en contacto con usted. Por favor, ¿Podría solicitarme los siguientes datos? - Nombre y apellido - Email - Producto en el que está interesado - Presupuesto estimado. ¡Muchas Gracias!',
+        '¡Perfecto! En la brevedad un agente se pondrá en contacto con usted.\n\nPor favor, ¿Podría solicitarme los siguientes datos?\n- Nombre y apellido\n- Email\n- Producto en el que está interesado\n- Presupuesto estimado.\n\n¡Muchas Gracias!',
       );
       chat.markUnread();
     });
