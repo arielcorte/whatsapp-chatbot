@@ -33,6 +33,9 @@ export class WhatsappService {
 
     const options: ClientOptions = {
       authStrategy: new LocalAuth({ clientId: userId }),
+      puppeteer: {
+        args: ['--no-sandbox'],
+      },
       qrMaxRetries: 5,
     };
 
