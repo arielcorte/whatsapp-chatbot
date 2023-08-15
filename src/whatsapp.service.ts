@@ -43,6 +43,7 @@ export class WhatsappService {
       puppeteer: {
         args: ['--no-sandbox'],
       },
+      takeoverOnConflict: true,
       qrMaxRetries: 5,
     };
 
