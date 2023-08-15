@@ -43,8 +43,8 @@ export class WhatsappGateway
         userId,
         qrCallback: (qr) => client.emit('qr-code', qr),
         readyCallback: (msg) => client.emit('ready', msg),
-        clientApi: UserAPIs[api] || undefined,
-        clientKey: UserAPIs[api] || undefined,
+        clientApi: UserAPIs[api].url || undefined,
+        clientKey: UserAPIs[api].key || undefined,
       }),
     );
   }
