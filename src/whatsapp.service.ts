@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Client, ClientOptions, LocalAuth, Message } from 'whatsapp-web.js';
 import { ChatflowService } from './chatflow.service';
+import UserAPIs from '../userapis.json';
 
 import emojiRegex from 'emoji-regex';
 
@@ -12,22 +13,28 @@ export class WhatsappService {
   private qrCodes: Map<string, string>;
   private timeouts: Map<string, NodeJS.Timeout>;
   private messages: Map<string, string>;
+  private clientApis: Map<string, { url: string; key: string }>;
 
   constructor(private readonly chatflowService: ChatflowService) {
     this.clients = new Map<string, Client>();
     this.qrCodes = new Map<string, string>();
     this.timeouts = new Map<string, NodeJS.Timeout>();
     this.messages = new Map<string, string>();
+    this.clientApis = new Map<string, { url: string; key: string }>();
   }
 
   createClientForUser({
     userId,
     qrCallback,
     readyCallback,
+    clientApi,
+    clientKey,
   }: {
     userId: string;
     qrCallback: (qr: string) => void;
     readyCallback: (message: string) => void;
+    clientApi?: string;
+    clientKey?: string;
   }) {
     if (this.clients.has(userId)) return 'user already created';
 
@@ -41,6 +48,14 @@ export class WhatsappService {
 
     try {
       const client = new Client(options);
+      if (clientApi && clientKey) {
+        this.clientApis.set(userId, { url: clientApi, key: clientKey });
+      } else {
+        this.clientApis.set(userId, {
+          url: UserAPIs.umma.url,
+          key: UserAPIs.umma.key,
+        });
+      }
 
       client.on('qr', (qr) => {
         console.log('qr called');
@@ -109,6 +124,7 @@ export class WhatsappService {
             const result = await this.chatflowService.query({
               question: this.messages.get(userId + msg.from),
               sessionId: msg.from,
+              clientApi: this.clientApis.get(userId),
             });
             console.log(msg.from, result);
             client.sendMessage(msg.from, result);

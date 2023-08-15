@@ -1,30 +1,29 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { lastValueFrom } from 'rxjs';
 
 @Injectable()
 export class ChatflowService {
-  constructor(
-    private readonly httpService: HttpService,
-    private configService: ConfigService,
-  ) {}
+  constructor(private readonly httpService: HttpService) {}
 
-  async query(data: { question: string; sessionId: string }): Promise<string> {
-    console.log('quering');
+  async query(data: {
+    question: string;
+    sessionId: string;
+    clientApi: { url: string; key: string };
+  }): Promise<string> {
+    console.log('quering', data.clientApi);
     console.log(data);
     try {
       const response = await lastValueFrom(
         this.httpService.post(
-          this.configService.get<string>('FLOWISE_API_URL'),
+          data.clientApi.url,
           {
             question: data.question,
             overrideConfig: { sessionId: data.sessionId },
           },
           {
             headers: {
-              Authorization:
-                this.configService.get<string>('FLOWISE_API_BEARER'),
+              Authorization: data.clientApi.key,
               'Content-Type': 'application/json',
             },
           },
