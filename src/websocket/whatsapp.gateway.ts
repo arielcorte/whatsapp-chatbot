@@ -32,18 +32,19 @@ export class WhatsappGateway
 
   @SubscribeMessage('new-client')
   newClient(
-    @MessageBody() data: { userId: string; api: string },
+    @MessageBody('userId') userId: string,
+    @MessageBody('api') api: string,
     @ConnectedSocket() client: Socket,
   ) {
-    console.log(data.userId);
+    console.log(userId);
     client.emit(
       'new-client',
       this.whatsappService.createClientForUser({
-        userId: data.userId,
+        userId,
         qrCallback: (qr) => client.emit('qr-code', qr),
         readyCallback: (msg) => client.emit('ready', msg),
-        clientApi: UserAPIs[data.api] || undefined,
-        clientKey: UserAPIs[data.api] || undefined,
+        clientApi: UserAPIs[api] || undefined,
+        clientKey: UserAPIs[api] || undefined,
       }),
     );
   }
