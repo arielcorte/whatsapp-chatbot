@@ -126,6 +126,8 @@ export class WhatsappService {
               question: this.messages.get(userId + msg.from),
               sessionId: msg.from,
               clientApi: this.clientApis.get(userId),
+              author: msg.from,
+              to: userId,
             });
             console.log(msg.from, result);
             client.sendMessage(msg.from, result);

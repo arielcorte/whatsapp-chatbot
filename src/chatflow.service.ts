@@ -10,6 +10,8 @@ export class ChatflowService {
     question: string;
     sessionId: string;
     clientApi: { url: string; key: string };
+    author?: string;
+    to?: string;
   }): Promise<string> {
     console.log('quering', data.clientApi);
     console.log(data);
@@ -18,7 +20,10 @@ export class ChatflowService {
         this.httpService.post(
           data.clientApi.url,
           {
-            question: data.question,
+            question:
+              data.author && data.to
+                ? `${data.author} dijo a ${data.to}: ${data.question}`
+                : data.question,
             overrideConfig: { sessionId: data.sessionId },
           },
           {
