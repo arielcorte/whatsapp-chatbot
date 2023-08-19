@@ -5,3 +5,9 @@ npm-debug.log
 dist
 .wwebjs_auth
 .wwebjs_cache
+.env
+.eslintrc.js
+.gitignore
+.prettierrc
+README.md
+docker-compose.yml
