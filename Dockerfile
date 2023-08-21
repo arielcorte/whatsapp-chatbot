@@ -2,48 +2,50 @@
 # BUILD FOR LOCAL DEVELOPMENT
 ###################
 
-FROM node:18-alpine As development
+FROM ghcr.io/puppeteer/puppeteer:latest As development
 
 WORKDIR /usr/src/app
 
-COPY --chown=node:node package*.json ./
+COPY --chown=pptruser:pptruser package*.json ./
 
 RUN npm ci
 
-COPY --chown=node:node . .
+COPY --chown=pptruser:pptruser . .
 
-USER node
+USER pptruser
 
 ###################
 # BUILD FOR PRODUCTION
 ###################
 
-FROM node:18-alpine As build
+FROM ghcr.io/puppeteer/puppeteer:latest As build
+
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable \
+    NODE_ENV=production
 
 WORKDIR /usr/src/app
 
-COPY --chown=node:node package*.json ./
+COPY --chown=pptruser:pptruser package*.json ./
 
-COPY --chown=node:node --from=development /usr/src/app/node_modules ./node_modules
+COPY --chown=pptruser:pptruser --from=development /usr/src/app/node_modules ./node_modules
 
-COPY --chown=node:node . .
+COPY --chown=pptruser:pptruser . .
 
 RUN npm run build
 
-ENV NODE_ENV production
-
 RUN npm ci --only=production && npm cache clean --force
 
-USER node
+USER pptruser
 
 ###################
 # PRODUCTION
 ###################
 
-FROM node:18-alpine As production
+FROM ghcr.io/puppeteer/puppeteer:latest As production
 
-COPY --chown=node:node --from=build /usr/src/app/node_modules ./node_modules
-COPY --chown=node:node --from=build /usr/src/app/dist ./dist
+COPY --chown=pptruser:pptruser --from=build /usr/src/app/node_modules ./node_modules
+COPY --chown=pptruser:pptruser --from=build /usr/src/app/dist ./dist
 
 EXPOSE 3000
 

@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { Client, ClientOptions, LocalAuth, Message } from 'whatsapp-web.js';
 import { ChatflowService } from './chatflow.service';
 import UserAPIs from '../userapis.json';
-
 import emojiRegex from 'emoji-regex';
 import { ConfigService } from '@nestjs/config';
 
@@ -41,15 +40,20 @@ export class WhatsappService {
     clientKey?: string;
   }) {
     if (this.clients.has(userId)) return 'user already created';
-    const puppeteerIP = this.configService.get<string>('PUPPETEER_WS_ENDPOINT');
-    console.log(puppeteerIP);
 
     const options: ClientOptions = {
       authStrategy: new LocalAuth({ clientId: userId }),
       puppeteer: {
-        headless: true,
-        args: ['--no-sandbox'],
-        browserWSEndpoint: `ws://${puppeteerIP}`,
+        args: [
+          '--disable-setuid-sandbox',
+          '--no-sandbox',
+          '--single-process',
+          '--no-zygote',
+        ],
+        executablePath:
+          this.configService.get<string>('NODE_ENV') === 'production'
+            ? this.configService.get<string>('PUPPETEER_EXECUTABLE_PATH')
+            : undefined,
       },
       takeoverOnConflict: true,
       qrMaxRetries: 5,
