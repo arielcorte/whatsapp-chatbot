@@ -4,6 +4,7 @@ import { ChatflowService } from './chatflow.service';
 import UserAPIs from '../userapis.json';
 
 import emojiRegex from 'emoji-regex';
+import { ConfigService } from '@nestjs/config';
 
 const agentKeyword = '@agente';
 
@@ -15,7 +16,10 @@ export class WhatsappService {
   private messages: Map<string, string>;
   private clientApis: Map<string, { url: string; key: string }>;
 
-  constructor(private readonly chatflowService: ChatflowService) {
+  constructor(
+    private readonly chatflowService: ChatflowService,
+    private configService: ConfigService,
+  ) {
     this.clients = new Map<string, Client>();
     this.qrCodes = new Map<string, string>();
     this.timeouts = new Map<string, NodeJS.Timeout>();
@@ -37,11 +41,15 @@ export class WhatsappService {
     clientKey?: string;
   }) {
     if (this.clients.has(userId)) return 'user already created';
+    const puppeteerIP = this.configService.get<string>('PUPPETEER_WS_ENDPOINT');
+    console.log(puppeteerIP);
 
     const options: ClientOptions = {
       authStrategy: new LocalAuth({ clientId: userId }),
       puppeteer: {
+        headless: true,
         args: ['--no-sandbox'],
+        browserWSEndpoint: `ws://${puppeteerIP}`,
       },
       takeoverOnConflict: true,
       qrMaxRetries: 5,
