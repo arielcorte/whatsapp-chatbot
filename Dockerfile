@@ -49,4 +49,4 @@ COPY --chown=pptruser:pptruser --from=build /usr/src/app/dist ./dist
 
 EXPOSE 3000
 
-CMD [ "node", "dist/src/main.js" ]
+CMD [ "node", "dist/main.js" ]

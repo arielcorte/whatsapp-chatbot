@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Client, ClientOptions, LocalAuth, Message } from 'whatsapp-web.js';
 import { ChatflowService } from './chatflow.service';
-import UserAPIs from '../userapis.json';
 import emojiRegex from 'emoji-regex';
 import { ConfigService } from '@nestjs/config';
 
@@ -64,10 +63,7 @@ export class WhatsappService {
       if (clientApi && clientKey) {
         this.clientApis.set(userId, { url: clientApi, key: clientKey });
       } else {
-        this.clientApis.set(userId, {
-          url: UserAPIs.umma.url,
-          key: UserAPIs.umma.key,
-        });
+        throw new Error('not specified client Api or Key');
       }
 
       client.on('qr', (qr) => {

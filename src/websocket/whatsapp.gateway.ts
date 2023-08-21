@@ -9,7 +9,6 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { WhatsappService } from '../whatsapp.service';
-import UserAPIs from '../../userapis.json';
 
 @WebSocketGateway({
   cors: { origin: '*' },
@@ -34,6 +33,7 @@ export class WhatsappGateway
   newClient(
     @MessageBody('userId') userId: string,
     @MessageBody('api') api: string,
+    @MessageBody('key') key: string,
     @ConnectedSocket() client: Socket,
   ) {
     console.log(userId);
@@ -43,8 +43,8 @@ export class WhatsappGateway
         userId,
         qrCallback: (qr) => client.emit('qr-code', qr),
         readyCallback: (msg) => client.emit('ready', msg),
-        clientApi: UserAPIs[api].url || undefined,
-        clientKey: UserAPIs[api].key || undefined,
+        clientApi: api || undefined,
+        clientKey: key || undefined,
       }),
     );
   }
