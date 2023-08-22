@@ -39,6 +39,8 @@ export class WhatsappService {
     clientKey?: string;
   }) {
     if (this.clients.has(userId)) return 'user already created';
+    console.log(this.configService.get<string>('NODE_ENV') === 'production');
+    console.log(this.configService.get<string>('PUPPETEER_EXECUTABLE_PATH'));
 
     const options: ClientOptions = {
       authStrategy: new LocalAuth({ clientId: userId }),
