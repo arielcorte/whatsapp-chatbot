@@ -52,9 +52,8 @@ export class WhatsappService {
           '--no-zygote',
         ],
         executablePath:
-          this.configService.get<string>('NODE_ENV') === 'production'
-            ? this.configService.get<string>('PUPPETEER_EXECUTABLE_PATH')
-            : undefined,
+          this.configService.get<string>('PUPPETEER_EXECUTABLE_PATH') ||
+          undefined,
       },
       takeoverOnConflict: true,
       qrMaxRetries: 5,
@@ -140,7 +139,9 @@ export class WhatsappService {
               to: userId,
             });
             console.log(msg.from, result);
-            client.sendMessage(msg.from, result);
+            if (result && result !== '') {
+              client.sendMessage(msg.from, result);
+            }
             this.timeouts.delete(userId + msg.from);
             this.messages.delete(userId + msg.from);
           });
