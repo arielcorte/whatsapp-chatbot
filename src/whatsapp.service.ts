@@ -192,6 +192,12 @@ export class WhatsappService {
   }
 
   deleteClientForUser(userId: string): boolean {
+    if (this.clients.get(userId)) {
+      this.clients.get(userId).destroy();
+    }
+    this.qrCodes.delete(userId);
+    this.deleteAllEntriesUserId(this.timeouts, userId);
+    this.deleteAllEntriesUserId(this.messages, userId);
     return this.clients.delete(userId);
   }
 
