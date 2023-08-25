@@ -30,7 +30,9 @@ COPY --chown=pptruser:pptruser . .
 
 RUN npm run build
 
-ENV NODE_ENV=production
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable \
+    NODE_ENV=production
 
 RUN npm ci --only=production && npm cache clean --force
 
