@@ -26,23 +26,23 @@ services:
       - 6543:6543
     cap_add:
       - SYS_ADMIN
-        #volumes:
-        #  - chatsapp_fileshare:.:/whatsapp-chatbot
+    volumes:
+      - chatsapp_fileshare:.:/whatsapp-chatbot
     networks:
       - chatsapp_network
 
-        #volumes:
-        #  flowise_fileshare:
-        #    driver: azure_file
-        #    driver_opts:
-        #      share_name: sqlite-flowise
-        #      storage_account_name: flowisepersistent
-        #
-        #  chatsapp_fileshare:
-        #    driver: azure_file
-        #    driver_opts:
-        #      share_name: sqlbackend
-        #      storage_account_name: flowisepersistent
+    volumes:
+      flowise_fileshare:
+        driver: azure_file
+        driver_opts:
+          share_name: sqlite-flowise
+          storage_account_name: flowisepersistent
+
+      chatsapp_fileshare:
+        driver: azure_file
+        driver_opts:
+          share_name: sqlbackend
+          storage_account_name: flowisepersistent
 
 networks:
   chatsapp_network:
