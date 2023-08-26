@@ -62,7 +62,10 @@ export class WhatsappService {
     try {
       const client = new Client(options);
       if (clientApi && clientKey) {
-        this.clientApis.set(userId, { url: clientApi, key: clientKey });
+        this.clientApis.set(userId, {
+          url: 'http://flowise:3000' + clientApi,
+          key: clientKey,
+        });
       } else {
         throw new Error('not specified client Api or Key');
       }
