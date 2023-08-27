@@ -2,7 +2,7 @@
 # BUILD FOR LOCAL DEVELOPMENT
 ###################
 
-FROM ghcr.io/puppeteer/puppeteer:latest As development
+FROM node:18-alpine As development
 
 WORKDIR /usr/src/app
 
@@ -18,7 +18,7 @@ USER pptruser
 # BUILD FOR PRODUCTION
 ###################
 
-FROM ghcr.io/puppeteer/puppeteer:latest As build
+FROM node:18-alpine As build
 
 WORKDIR /usr/src/app
 
@@ -31,7 +31,7 @@ COPY --chown=pptruser:pptruser . .
 RUN npm run build
 
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
     NODE_ENV=production
 
 RUN npm ci --only=production && npm cache clean --force
@@ -42,13 +42,21 @@ USER pptruser
 # PRODUCTION
 ###################
 
-FROM ghcr.io/puppeteer/puppeteer:latest As production
+FROM node:18-alpine As production
 
 COPY --chown=pptruser:pptruser --from=build /usr/src/app/node_modules ./node_modules
 COPY --chown=pptruser:pptruser --from=build /usr/src/app/dist ./dist
 
+RUN apk add --no-cache git
+RUN apk add --no-cache python3 py3-pip make g++
+# needed for pdfjs-dist
+RUN apk add --no-cache build-base cairo-dev pango-dev
+
+# Install Chromium
+RUN apk add --no-cache chromium
+
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
     NODE_ENV=production
 
 EXPOSE 3000

@@ -55,7 +55,6 @@ export class WhatsappService {
           this.configService.get<string>('PUPPETEER_EXECUTABLE_PATH') ||
           undefined,
       },
-      takeoverOnConflict: true,
       qrMaxRetries: 5,
     };
 
