@@ -11,3 +11,5 @@ dist
 .prettierrc
 README.md
 docker-compose.yml
+.wwebjs_auth/
+.wwebjs_cache/
