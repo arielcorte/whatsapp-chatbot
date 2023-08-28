@@ -1,0 +1,38 @@
+version: "3.9"
+
+services:
+  whatsapp-chatbot:
+    build:
+      context: ./
+      target: development
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - 6543:6543
+    cap_add:
+      - SYS_ADMIN
+    volumes:
+      - .:/usr/src/app
+    networks:
+      - chatsapp_network
+    command: npm run dev
+
+  flowise:
+    build:
+      context: ./
+      dockerfile: flowise.Dockerfile
+    image: flowiseai/flowise
+    restart: always
+    env_file:
+      - .env.flowise
+    ports:
+      - 3000:3000
+    volumes:
+      - ~/.flowise:/root/.flowise
+    networks:
+      - chatsapp_network
+    command: /bin/sh -c "flowise start"
+
+networks:
+  chatsapp_network:
