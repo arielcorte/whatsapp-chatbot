@@ -27,12 +27,15 @@
     "@nestjs/core": "^10.0.0",
     "@nestjs/platform-express": "^10.0.0",
     "@nestjs/platform-socket.io": "^10.1.2",
+    "@nestjs/typeorm": "^10.0.0",
     "@nestjs/websockets": "^10.1.2",
     "axios": "^1.4.0",
     "emoji-regex": "^10.2.1",
     "qrcode-terminal": "^0.12.0",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.1",
+    "sqlite3": "^5.1.6",
+    "typeorm": "^0.3.17",
     "whatsapp-web.js": "https://github.com/Julzk/whatsapp-web.js/tarball/jkr_hotfix_8"
   },
   "devDependencies": {
