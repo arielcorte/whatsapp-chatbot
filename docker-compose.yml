@@ -11,7 +11,7 @@ services:
     cap_add:
       - SYS_ADMIN
     volumes:
-      - .:/whatsapp-chatbot
+      - .:/usr/src/app
     networks:
       - chatsapp_network
 

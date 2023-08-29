@@ -15,10 +15,13 @@ export class ChatflowService {
   }): Promise<string> {
     console.log('quering', data.clientApi);
     console.log(data);
+    const clientApiUrl = data.clientApi.url.startsWith('http')
+      ? 'http://flowise:3000' + data.clientApi.url.replace(/.*\/api/g, '/api')
+      : 'http://flowise:3000' + data.clientApi.url;
     try {
       const response = await lastValueFrom(
         this.httpService.post(
-          data.clientApi.url,
+          clientApiUrl,
           {
             question:
               data.author && data.to
@@ -40,6 +43,7 @@ export class ChatflowService {
       return response.data;
     } catch (error) {
       console.log(error);
+      return 'failed';
     }
   }
 }

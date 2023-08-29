@@ -133,16 +133,24 @@ export class WhatsappService {
 
           const currentTimeout = this.executeInDelay(async () => {
             this.messageCount();
+            const clientApi = this.parseClientApi(this.clientApis.get(userId));
             const result = await this.chatflowService.query({
               question: this.messages.get(userId + msg.from),
               sessionId: msg.from,
-              clientApi: this.clientApis.get(userId),
+              clientApi,
               author: msg.from,
               to: userId,
             });
             console.log(msg.from, result);
-            if (result && result !== '') {
-              client.sendMessage(msg.from, result);
+            if (result !== undefined && result !== '') {
+              if (result === 'failed') {
+                client.sendMessage(
+                  msg.from,
+                  'Lo siento, no te he entendido. 😔\n¿Podrías explicármelo de nuevo con otras palabras? 🤗',
+                );
+              } else {
+                client.sendMessage(msg.from, result);
+              }
             }
             this.timeouts.delete(userId + msg.from);
             this.messages.delete(userId + msg.from);
@@ -233,6 +241,19 @@ export class WhatsappService {
       );
       chat.markUnread();
     });
+  }
+
+  parseClientApi(clientApi: { url: string; key: string }): {
+    url: string;
+    key: string;
+  } {
+    if (clientApi.url.startsWith('http')) {
+      return {
+        url: clientApi.url.replace(/.*\/api/g, '/api'),
+        key: clientApi.key,
+      };
+    }
+    return clientApi;
   }
 
   messageCount() {
