@@ -3,6 +3,9 @@ import { Client, ClientOptions, LocalAuth, Message } from 'whatsapp-web.js';
 import { ChatflowService } from './chatflow.service';
 import emojiRegex from 'emoji-regex';
 import { ConfigService } from '@nestjs/config';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Wclient } from './wclient.entity';
 
 const agentKeyword = '@agente';
 
@@ -15,6 +18,7 @@ export class WhatsappService {
   private clientApis: Map<string, { url: string; key: string }>;
 
   constructor(
+    @InjectRepository(Wclient) private wclientRepository: Repository<Wclient>,
     private readonly chatflowService: ChatflowService,
     private configService: ConfigService,
   ) {
@@ -45,12 +49,7 @@ export class WhatsappService {
     const options: ClientOptions = {
       authStrategy: new LocalAuth({ clientId: userId }),
       puppeteer: {
-        args: [
-          '--disable-setuid-sandbox',
-          '--no-sandbox',
-          '--single-process',
-          '--no-zygote',
-        ],
+        args: ['--disable-setuid-sandbox', '--no-sandbox', '--no-zygote'],
         executablePath:
           this.configService.get<string>('PUPPETEER_EXECUTABLE_PATH') ||
           undefined,
@@ -60,6 +59,11 @@ export class WhatsappService {
 
     try {
       const client = new Client(options);
+      try {
+        this.wclientRepository.save({ name: userId });
+      } catch (e) {
+        console.log(e);
+      }
       if (clientApi && clientKey) {
         this.clientApis.set(userId, {
           url: 'http://flowise:3000' + clientApi,
@@ -76,12 +80,22 @@ export class WhatsappService {
       });
 
       client.on('ready', () => {
+        try {
+          this.wclientRepository
+            .findOneOrFail({ where: { name: userId } })
+            .then((wclient) => {
+              console.log('name from database: ', wclient.name);
+            });
+        } catch (e) {
+          console.log(e);
+        }
         console.log('Client is ready!');
         readyCallback('ready');
       });
 
       client.on('disconnected', () => {
         console.log('disconnected', userId);
+        this.clients.get(userId).destroy();
         this.clients.delete(userId);
         this.qrCodes.delete(userId);
         this.deleteAllEntriesUserId(this.timeouts, userId);
@@ -132,7 +146,7 @@ export class WhatsappService {
           console.log('message set');
 
           const currentTimeout = this.executeInDelay(async () => {
-            this.messageCount();
+            this.addMessageCount(userId);
             const clientApi = this.parseClientApi(this.clientApis.get(userId));
             const result = await this.chatflowService.query({
               question: this.messages.get(userId + msg.from),
@@ -256,7 +270,15 @@ export class WhatsappService {
     return clientApi;
   }
 
-  messageCount() {
-    //TODO increment message count by 1
+  async addMessageCount(userId: string) {
+    try {
+      return this.wclientRepository.increment(
+        { name: userId },
+        'messageCount',
+        1,
+      );
+    } catch (e) {
+      console.log(e);
+    }
   }
 }

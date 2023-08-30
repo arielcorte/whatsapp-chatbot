@@ -13,7 +13,7 @@ services:
     cap_add:
       - SYS_ADMIN
     volumes:
-      - .:/usr/src/app
+      - ./src:/usr/src/app/src
     networks:
       - chatsapp_network
     command: npm run dev
