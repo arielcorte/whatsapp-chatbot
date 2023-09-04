@@ -6,10 +6,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Wclient } from './wclient.entity';
 import { ConfigModule } from '@nestjs/config';
 import { HttpModule } from '@nestjs/axios';
+import { WclientController } from './wclient.controller';
 
 @Module({
   imports: [ConfigModule, HttpModule, TypeOrmModule.forFeature([Wclient])],
   providers: [WhatsappService, WhatsappGateway, ChatflowService],
-  controllers: [],
+  controllers: [WclientController],
 })
 export class ChatbotModule {}

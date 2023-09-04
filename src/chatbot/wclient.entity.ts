@@ -2,16 +2,13 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
   UpdateDateColumn,
 } from 'typeorm';
 
 @Entity()
 export class Wclient {
-  @PrimaryGeneratedColumn('uuid')
-  id!: number;
-
-  @Column({ unique: true })
+  @PrimaryColumn()
   name: string;
 
   @Column({ default: 'created' })
