@@ -52,9 +52,24 @@ export class WclientController {
       });
   }
 
+  @Get('get-all')
+  async getAll(): Promise<string> {
+    return this.wclientRepository
+      .find({ select: { name: true } })
+      .then((wclients) => {
+        return wclients
+          .map(
+            (wclient, i) =>
+              `${i + 1}. <a href="/wclient/data/${wclient.name}">${
+                wclient.name
+              }</a>`,
+          )
+          .join('<br>');
+      });
+  }
+
   @Post('create')
-  create(@Body('name') name: string) {
-    console.log(name);
-    return this.wclientRepository.save({ name });
+  create(@Body() body: Wclient) {
+    return this.wclientRepository.save(body);
   }
 }

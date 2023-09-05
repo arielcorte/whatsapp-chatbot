@@ -20,6 +20,12 @@ export class Wclient {
   @Column({ default: 0 })
   messageCount: number;
 
+  @Column()
+  flowiseUrl: string;
+
+  @Column()
+  flowiseKey: string;
+
   @CreateDateColumn()
   createdAt: string;
 
