@@ -16,53 +16,49 @@ export class WclientController {
 
   @Get('data')
   noDataName(): string {
-    return 'No client name provided';
+    return 'No client client id provided';
   }
 
-  @Get('data/:name')
-  async getClientData(@Param('name') name: string): Promise<string> {
-    return this.wclientRepository
-      .findOne({ where: { name } })
-      .then((wclient) => {
-        if (!wclient) return 'Client not found';
-        return `| Name: ${wclient.name} | Status: ${
-          wclient.status
-        } | isActive: ${
-          wclient.isActive
-        } | Message count: ${wclient.messageCount.toString()} | CreatedAt: ${
-          wclient.createdAt
-        } | UpdatedAt: ${wclient.updatedAt} |`;
-      });
+  @Get('data/:id')
+  async getClientData(@Param('id') id: number): Promise<string> {
+    return this.wclientRepository.findOne({ where: { id } }).then((wclient) => {
+      if (!wclient) return 'Client not found';
+      return `| ID: ${wclient.id} | Name: ${wclient.name} | Status: ${
+        wclient.status
+      } | isActive: ${
+        wclient.isActive
+      } | Message count: ${wclient.messageCount.toString()} | CreatedAt: ${
+        wclient.createdAt
+      } | UpdatedAt: ${wclient.updatedAt} |`;
+    });
   }
 
   @Get('message-count')
   noName(): string {
-    return 'No client name provided';
+    return 'No client client id provided';
   }
 
-  @Get('message-count/:name')
-  async getMessageCount(@Param('name') name: string): Promise<string> {
-    return this.wclientRepository
-      .findOne({ where: { name } })
-      .then((wclient) => {
-        if (!wclient) return 'Client not found';
-        return `| Client name: ${
-          wclient.name
-        } | Message count: ${wclient.messageCount.toString()} |`;
-      });
+  @Get('message-count/:id')
+  async getMessageCount(@Param('id') id: number): Promise<string> {
+    return this.wclientRepository.findOne({ where: { id } }).then((wclient) => {
+      if (!wclient) return 'Client not found';
+      return `| ID: ${wclient.id} | Name: ${
+        wclient.name
+      } | Message count: ${wclient.messageCount.toString()} |`;
+    });
   }
 
   @Get('get-all')
   async getAll(): Promise<string> {
     return this.wclientRepository
-      .find({ select: { name: true } })
+      .find({ select: { id: true, name: true } })
       .then((wclients) => {
         return wclients
           .map(
             (wclient, i) =>
-              `${i + 1}. <a href="/wclient/data/${wclient.name}">${
+              `${i + 1}. <a href="/wclient/data/${wclient.id}"> ${
                 wclient.name
-              }</a>`,
+              } | ${wclient.id}</a>`,
           )
           .join('<br>');
       });
