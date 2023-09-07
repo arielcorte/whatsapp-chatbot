@@ -2,14 +2,14 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
   UpdateDateColumn,
 } from 'typeorm';
 
 @Entity()
 export class Wclient {
-  @PrimaryGeneratedColumn('uuid')
-  id: number;
+  @PrimaryColumn()
+  id: string;
 
   @Column()
   name: string;
@@ -28,6 +28,9 @@ export class Wclient {
 
   @Column()
   flowiseKey: string;
+
+  @Column({ nullable: true })
+  phoneNumber: string;
 
   @CreateDateColumn()
   createdAt: string;

@@ -60,13 +60,18 @@ export class WhatsappService {
     try {
       const client = new Client(options);
       try {
-        this.wclientRepository.save({ name: userId });
+        this.wclientRepository.save({
+          id: userId,
+          name: userId,
+          flowiseUrl: clientApi,
+          flowiseKey: clientKey,
+        });
       } catch (e) {
         console.log(e);
       }
       if (clientApi && clientKey) {
         this.clientApis.set(userId, {
-          url: 'http://flowise:3000' + clientApi,
+          url: 'http://flowise:3000/api/v1/prediction/' + clientApi,
           key: clientKey,
         });
       } else {
@@ -86,6 +91,10 @@ export class WhatsappService {
             .then((wclient) => {
               console.log('name from database: ', wclient.name);
             });
+          this.wclientRepository.update(
+            { id: userId },
+            { status: 'ready', isActive: true },
+          );
         } catch (e) {
           console.log(e);
         }
@@ -100,6 +109,10 @@ export class WhatsappService {
         this.qrCodes.delete(userId);
         this.deleteAllEntriesUserId(this.timeouts, userId);
         this.deleteAllEntriesUserId(this.messages, userId);
+        this.wclientRepository.update(
+          { id: userId },
+          { status: 'disconnected' },
+        );
       });
 
       client.on('message', async (msg: Message) => {
@@ -147,7 +160,7 @@ export class WhatsappService {
 
           const currentTimeout = this.executeInDelay(async () => {
             this.addMessageCount(userId);
-            const clientApi = this.parseClientApi(this.clientApis.get(userId));
+            const clientApi = this.clientApis.get(userId);
             const result = await this.chatflowService.query({
               question: this.messages.get(userId + msg.from),
               sessionId: msg.from,
@@ -257,23 +270,10 @@ export class WhatsappService {
     });
   }
 
-  parseClientApi(clientApi: { url: string; key: string }): {
-    url: string;
-    key: string;
-  } {
-    if (clientApi.url.startsWith('http')) {
-      return {
-        url: clientApi.url.replace(/.*\/api/g, '/api'),
-        key: clientApi.key,
-      };
-    }
-    return clientApi;
-  }
-
   async addMessageCount(userId: string) {
     try {
       return this.wclientRepository.increment(
-        { name: userId },
+        { id: userId },
         'messageCount',
         1,
       );

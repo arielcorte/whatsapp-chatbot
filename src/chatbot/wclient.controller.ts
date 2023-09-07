@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Wclient } from './wclient.entity';
 import { Repository } from 'typeorm';
@@ -20,7 +20,7 @@ export class WclientController {
   }
 
   @Get('data/:id')
-  async getClientData(@Param('id') id: number): Promise<string> {
+  async getClientData(@Param('id') id: string): Promise<string> {
     return this.wclientRepository.findOne({ where: { id } }).then((wclient) => {
       if (!wclient) return 'Client not found';
       return `| ID: ${wclient.id} | Name: ${wclient.name} | Status: ${
@@ -39,7 +39,7 @@ export class WclientController {
   }
 
   @Get('message-count/:id')
-  async getMessageCount(@Param('id') id: number): Promise<string> {
+  async getMessageCount(@Param('id') id: string): Promise<string> {
     return this.wclientRepository.findOne({ where: { id } }).then((wclient) => {
       if (!wclient) return 'Client not found';
       return `| ID: ${wclient.id} | Name: ${
