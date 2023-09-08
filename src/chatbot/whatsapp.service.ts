@@ -60,12 +60,33 @@ export class WhatsappService {
     try {
       const client = new Client(options);
       try {
-        this.wclientRepository.save({
-          id: userId,
-          name: userId,
-          flowiseUrl: clientApi,
-          flowiseKey: clientKey,
-        });
+        //find client by unique name and update it or create a new one
+        this.wclientRepository.findOneOrFail({ where: { name: userId } }).then(
+          (wclient) => {
+            console.log('name from database: ', wclient.name);
+            this.wclientRepository.update(
+              { id: wclient.id },
+              {
+                name: userId,
+                status: 'created',
+                isActive: true,
+                flowiseUrl: clientApi,
+                flowiseKey: clientKey,
+              },
+            );
+          },
+          () => {
+            console.log('name not found in database: ', userId);
+            this.wclientRepository.insert({
+              name: userId,
+              status: 'created',
+              isActive: true,
+              messageCount: 0,
+              flowiseUrl: clientApi,
+              flowiseKey: clientKey,
+            });
+          },
+        );
       } catch (e) {
         console.log(e);
       }
@@ -88,13 +109,18 @@ export class WhatsappService {
         try {
           this.wclientRepository
             .findOneOrFail({ where: { name: userId } })
-            .then((wclient) => {
-              console.log('name from database: ', wclient.name);
-            });
-          this.wclientRepository.update(
-            { id: userId },
-            { status: 'ready', isActive: true },
-          );
+            .then(
+              (wclient) => {
+                console.log('name from database: ', wclient.name);
+                this.wclientRepository.update(
+                  { id: wclient.id },
+                  { status: 'ready', isActive: true },
+                );
+              },
+              (e) => {
+                console.log(e);
+              },
+            );
         } catch (e) {
           console.log(e);
         }
@@ -109,9 +135,16 @@ export class WhatsappService {
         this.qrCodes.delete(userId);
         this.deleteAllEntriesUserId(this.timeouts, userId);
         this.deleteAllEntriesUserId(this.messages, userId);
-        this.wclientRepository.update(
-          { id: userId },
-          { status: 'disconnected' },
+        this.wclientRepository.findOneOrFail({ where: { name: userId } }).then(
+          (wclient) => {
+            this.wclientRepository.update(
+              { id: wclient.id },
+              { status: 'disconnected', isActive: false },
+            );
+          },
+          (e) => {
+            console.log(e);
+          },
         );
       });
 
@@ -273,7 +306,7 @@ export class WhatsappService {
   async addMessageCount(userId: string) {
     try {
       return this.wclientRepository.increment(
-        { id: userId },
+        { name: userId },
         'messageCount',
         1,
       );
